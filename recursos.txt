@@ -1,0 +1,36 @@
+#En el formulario creado
+#Validación para que la moneda de origen no sea igual a la de destino
+    def clean(self):
+        cleaned_data = super().clean()#Se asegura que cualquier lógica de validación en las clases principales se mantengan
+        moneda = cleaned_data.get("moneda")#Solicito un campo
+        moneda_destino = cleaned_data.get("moneda_destino")#Solicito el segundo campo
+
+        if moneda == moneda_destino:#Se compara para que no sean iguales
+            msg = "La moneda de origen y la de destino no pueden ser iguales."#Se crea el mensaje a mostrar
+            self.add_error('moneda', msg)#Se asigna el mensaje a un campo del formulario
+
+
+from datetime import datetime, date
+from dateutil.relativedelta import relativedelta #Para usar relativedelta
+
+class tasa_filtro_forms(ModelForm):
+	#se crea un campo de selección cargado con los datos de las monedas, excluyendo las no aprobadas
+	#Empty_label sirve para asignar el texto a la opción por defecto del select, y no es requerido ya que al seleccionar el empty label desea la opción de todas
+    moneda = forms.ModelChoiceField(label='Moneda origen', queryset=monedas.objects.exclude(estado='E'),
+                                    widget=forms.Select(attrs={'class': 'form-control'}), empty_label='Todas', required = False)
+    moneda_destino = forms.ModelChoiceField(label='Moneda destino', queryset=monedas.objects.exclude(estado='E'),
+                                    widget=forms.Select(attrs={'class': 'form-control'}), empty_label='Todas', required = False)
+
+    # Se establece la fecha de fin como el día actual
+    formato_fin = datetime.datetime.now().strftime("%d-%m-%Y")
+    # Se establece la fecha de inicio en una semana hacia atrás
+    fecha_inicio = date.today() - relativedelta(days=7)
+    formato_inicio = fecha_inicio.strftime("%d-%m-%Y")
+
+    fecha_inicio = forms.DateField(label='Fecha Inicio', widget=forms.TextInput(
+        attrs={'class': 'form-control date', 'type': 'input', 'id': 'fecha_inicio','name':'inicio', 'value': formato_inicio}))
+    fecha_fin = forms.DateField(label='Fecha Fin', widget=forms.TextInput(
+        attrs={'class': 'form-control date', 'type': 'input', 'id': 'fecha_fin', 'name': 'fin', 'value': formato_fin}))
+    class Meta:
+        model = monedas
+        fields = ['moneda','moneda_destino', 'fecha_inicio', 'fecha_fin']
